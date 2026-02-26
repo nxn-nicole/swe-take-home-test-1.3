@@ -122,22 +122,32 @@ export function CheckForm({ onSuccess }: Props) {
 
       <div className="form-group">
         <label>Checklist Items *</label>
+        <p className="checklist-helper">Checked means OK. Unchecked means FAIL.</p>
         <div className="checklist">
           {items.map((item) => (
             <div key={item.key} className="checklist-item">
-              <span className="item-label">{item.key}</span>
-              <select
-                value={item.status}
-                onChange={(e) =>
-                  handleItemStatusChange(
-                    item.key,
-                    e.target.value as CheckItemStatus,
-                  )
-                }
-              >
-                <option value="OK">OK</option>
-                <option value="FAIL">FAIL</option>
-              </select>
+              <label className="item-label" htmlFor={`item-${item.key}`}>
+                {item.key}
+              </label>
+              <div className="checklist-item-control">
+                <span
+                  className={`checklist-status ${item.status === "OK" ? "ok" : "fail"}`}
+                >
+                  {item.status}
+                </span>
+                <input
+                  id={`item-${item.key}`}
+                  className="checklist-checkbox"
+                  type="checkbox"
+                  checked={item.status === "OK"}
+                  onChange={(e) =>
+                    handleItemStatusChange(
+                      item.key,
+                      e.target.checked ? "OK" : "FAIL",
+                    )
+                  }
+                />
+              </div>
             </div>
           ))}
         </div>
