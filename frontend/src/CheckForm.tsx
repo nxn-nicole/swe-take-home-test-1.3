@@ -6,6 +6,7 @@ import type {
   CheckItemStatus,
   ErrorResponse,
 } from "./types";
+import type { ToastType } from "./Toast";
 import { api } from "./api";
 
 const CHECK_ITEMS: CheckItemKey[] = [
@@ -18,9 +19,10 @@ const CHECK_ITEMS: CheckItemKey[] = [
 
 interface Props {
   onSuccess: () => void;
+  showToast: (message: string, type: ToastType) => void;
 }
 
-export function CheckForm({ onSuccess }: Props) {
+export function CheckForm({ onSuccess, showToast }: Props) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [odometerKm, setOdometerKm] = useState("");
@@ -29,25 +31,22 @@ export function CheckForm({ onSuccess }: Props) {
     CHECK_ITEMS.map((key) => ({ key, status: "OK" })),
   );
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
     api.getVehicles().then(setVehicles).catch(console.error);
   }, []);
 
-  const handleItemStatusChange = (key: CheckItemKey, status: CheckItemStatus) => {
+  const handleItemStatusChange = (
+    key: CheckItemKey,
+    status: CheckItemStatus,
+  ) => {
     setItems((prev) =>
-      prev.map((item) =>
-        item.key === key ? { ...item, status } : item,
-      ),
+      prev.map((item) => (item.key === key ? { ...item, status } : item)),
     );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setValidationErrors([]);
     setLoading(true);
 
     try {
@@ -63,15 +62,24 @@ export function CheckForm({ onSuccess }: Props) {
       setOdometerKm("");
       setNote("");
       setItems(CHECK_ITEMS.map((key) => ({ key, status: "OK" })));
+      showToast("Inspection check submitted successfully.", "success");
       onSuccess();
     } catch (err: unknown) {
       const errorResponse = err as ErrorResponse;
       if (errorResponse.error?.details) {
-        setValidationErrors(
-          errorResponse.error.details.map((d) => `${d.field}: ${d.reason}`),
+        const details = errorResponse.error.details.map(
+          (d) => `${d.field}: ${d.reason}`,
+        );
+        showToast(
+          `${errorResponse.error.message}: ${details.join(" | ")}`,
+          "error",
         );
       } else {
-        setError("Failed to submit check. Please try again.");
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to submit check. Please try again.";
+        showToast(message, "error");
       }
     } finally {
       setLoading(false);
@@ -81,18 +89,6 @@ export function CheckForm({ onSuccess }: Props) {
   return (
     <form onSubmit={handleSubmit} className="check-form">
       <h2>Submit Vehicle Inspection Result</h2>
-
-      {error && <div className="error-banner">{error}</div>}
-      {validationErrors.length > 0 && (
-        <div className="error-banner">
-          <strong>Validation errors:</strong>
-          <ul>
-            {validationErrors.map((err, i) => (
-              <li key={i}>{err}</li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       <div className="form-group">
         <label htmlFor="vehicle">Vehicle *</label>
@@ -138,7 +134,9 @@ export function CheckForm({ onSuccess }: Props) {
 
       <div className="form-group">
         <label>Checklist Items *</label>
-        <p className="checklist-helper">Checked means OK. Unchecked means FAIL.</p>
+        <p className="checklist-helper">
+          Checked means OK. Unchecked means FAIL.
+        </p>
         <div className="checklist">
           {items.map((item) => (
             <div key={item.key} className="checklist-item">
