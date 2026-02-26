@@ -26,7 +26,7 @@ function App() {
           </div>
 
           <div className="right-panel">
-            <CheckHistory refreshTrigger={refreshKey} />
+            <CheckHistory refreshTrigger={refreshKey} showToast={showToast} />
           </div>
         </div>
       </main>
