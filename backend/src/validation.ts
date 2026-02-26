@@ -84,9 +84,12 @@ export const validateCheckRequest = (body: any): ValidationError[] => {
   }
 
   // Validate odometerKm
-  if (body.odometerKm === undefined || body.odometerKm === null) {
+  if (body.odometerKm === undefined) {
     errors.push({ field: "odometerKm", reason: "is required" });
-  } else if (typeof body.odometerKm !== "number") {
+  } else if (
+    typeof body.odometerKm !== "number" ||
+    Number.isNaN(body.odometerKm)
+  ) {
     errors.push({ field: "odometerKm", reason: "must be a number" });
   } else if (body.odometerKm <= 0) {
     errors.push({ field: "odometerKm", reason: "must be > 0" });
