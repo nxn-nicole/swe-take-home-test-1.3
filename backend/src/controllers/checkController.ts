@@ -27,7 +27,22 @@ import { ErrorResponse } from "../types";
  * @returns JSON response with created check or validation errors
  */
 export const createCheck = (req: Request, res: Response): void => {
-  res.status(501).json({ error: { message: "Not implemented" } });
+  const validationErrors = validateCheckRequest(req.body);
+
+  if (validationErrors.length > 0) {
+    const errorResponse: ErrorResponse = {
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid request",
+        details: validationErrors,
+      },
+    };
+    res.status(400).json(errorResponse);
+    return;
+  }
+
+  const createdCheck = checkService.createCheck(req.body);
+  res.status(201).json(createdCheck);
 };
 
 /**
